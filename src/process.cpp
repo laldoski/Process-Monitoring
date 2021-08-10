@@ -3,31 +3,87 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+#include <iterator>
+#include <unistd.h>
 #include "process.h"
 
 using std::string;
 using std::to_string;
 using std::vector;
 
-// TODO: Return this process's ID
-int Process::Pid() { return 0; }
+//~TODO: Return this process's ID
+int Process::Pid() { return this->pid_; }
+  
+    Process::Process(int pid_)
+     {
+    this->pid_=pid_;  
+     }
+//~TODO: Return this process's CPU utilization
+float Process::CpuUtilization()  // { return 0; }
+{
+float utime, stime, cutime, cstime, starttime, total_time, cpu_usage, seconds;
+int x=1;
+ std::ifstream upstream(kProcDirectory + this->pid_ + kStatFilename);
+   if (upstream.is_open())
+   {
+     istream_iterator<auto> begin(upstream);
+     istream_iterator<auto>eof;
+      while (begin!=eof && x<=23)
+      {
+           switch(x)
+           {
+               case 14:
+               utime=begin; 
+               case 15:
+               stime=begin; 
+               case 16:
+               cutime=begin; 
+               case 17:
+               cstime=begin; 
+               case 22;
+               starttime=begin;
+               default:
+               break;
+            }
+            begin ++; 
+            x++;
 
-// TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+      }
 
-// TODO: Return the command that generated this process
-string Process::Command() { return string(); }
+   total_time = utime + stime + cutime + cstime;
+   seconds = starttime - (starttime/sysconf(_SC_CLK_TCK));
+   cpu_usage  = (((total_time /sysconf(_SC_CLK_TCK))/ seconds ) * 100);
+   return cpu_usage;
 
-// TODO: Return this process's memory utilization
-string Process::Ram() { return string(); }
+   }
+   else throw ("/proc/[pid]/stat not accessible");
+}
 
-// TODO: Return the user (name) that generated this process
-string Process::User() { return string(); }
 
-// TODO: Return the age of this process (in seconds)
-long int Process::UpTime() { return 0; }
 
-// TODO: Overload the "less than" comparison operator for Process objects
-// REMOVE: [[maybe_unused]] once you define the function
-bool Process::operator<(Process const& a[[maybe_unused]]) const { return true; }
+//~TODO: Return the command that generated this process
+string Process::Command()// { return string(); }
+{
+ return LinuxParser::Command(this->pid_);
+}
+
+//~TODO: Return this process's memory utilization
+string Process::Ram()  //{  return string(); }
+{
+ return LinuxParser::Ram(this->pid_);
+}
+//~TODO: Return the user (name) that generated this process
+string Process::User()   // { return string(); }
+{
+ return LinuxParser::User(this->pid_);
+}
+
+//~TODO: Return the age of this process (in seconds)
+long int Process::UpTime() { return LinuxParser::UpTime(this->pid_); }
+
+//~TODO: Overload the "less than" comparison operator for Process objects
+
+bool Process::operator<(Process const& a) const 
+{ 
+    return a.CpuUtilization() > this->CpuUtilization();
+}
