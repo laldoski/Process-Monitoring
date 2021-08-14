@@ -5,7 +5,11 @@
 #include <vector>
 #include <iterator>
 #include <unistd.h>
+#include <cstdio>
 #include "process.h"
+#include "linux_parser.h"
+
+using namespace LinuxParser;
 
 using std::string;
 using std::to_string;
@@ -23,25 +27,25 @@ float Process::CpuUtilization()  // { return 0; }
 {
 float utime, stime, cutime, cstime, starttime, total_time, cpu_usage, seconds;
 int x=1;
- std::ifstream upstream(kProcDirectory + this->pid_ + kStatFilename);
+ std::ifstream upstream(linux_parser::kProcDirectory + to_string(this->pid_)+ linux_parser::kStatFilename);
    if (upstream.is_open())
    {
-     istream_iterator<auto> begin(upstream);
-     istream_iterator<auto>eof;
-      while (begin!=eof && x<=23)
+     std::istream_iterator<float> begin(upstream);
+     std::istream_iterator<float>eof();
+      while ((begin!=eof()) && (x<=23))
       {
            switch(x)
            {
                case 14:
-               utime=begin; 
+               utime=*begin; 
                case 15:
-               stime=begin; 
+               stime=*begin; 
                case 16:
-               cutime=begin; 
+               cutime=*begin; 
                case 17:
-               cstime=begin; 
-               case 22;
-               starttime=begin;
+               cstime=*begin; 
+               case 22:
+               starttime=*begin;
                default:
                break;
             }
@@ -85,5 +89,5 @@ long int Process::UpTime() { return LinuxParser::UpTime(this->pid_); }
 
 bool Process::operator<(Process const& a) const 
 { 
-    return a.CpuUtilization() > this->CpuUtilization();
+    return a.linux_parser::CpuUtilization() > this->linux_parser::CpuUtilization();
 }
