@@ -15,14 +15,11 @@ using std::size_t;
 using std::string;
 using std::vector;
 
-//sitter function
-//void Cpu(Processor cpu) { cpu_=cpu; }
 
 //~TODO: Return the system's CPU
 Processor& System::Cpu() { return cpu_;}
 
 //~TODO: Return a container composed of the system's processes
-//https://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
 vector<Process>& System::Processes()
  {
      processes_.clear();
@@ -33,7 +30,7 @@ vector<Process>& System::Processes()
         {
         // Process processVec(pid);
        //  processes_.push_back<processVec>;
-       processes_.push_back<start>;
+       processes_.push_back(start);
         }
 
       std::sort(processes_.begin(),processes_.end());

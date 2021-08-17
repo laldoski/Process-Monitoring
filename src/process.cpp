@@ -31,8 +31,8 @@ int x=1;
    if (upstream.is_open())
    {
      std::istream_iterator<float> begin(upstream);
-     std::istream_iterator<float>eof();
-      while ((begin!=eof()) && (x<=23))
+     std::istream_iterator<float>eof;
+      while ((begin!=eof) && (x<=23))
       {
            switch(x)
            {
