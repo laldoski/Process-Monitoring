@@ -16,7 +16,7 @@ using std::string;
 using std::vector;
 
 //sitter function
-void Cpu(Processor cpu) { cpu_=cpu; }
+//void Cpu(Processor cpu) { cpu_=cpu; }
 
 //~TODO: Return the system's CPU
 Processor& System::Cpu() { return cpu_;}
@@ -39,7 +39,7 @@ vector<Process>& System::Processes()
       std::sort(processes_.begin(),processes_.end());
 
         return processes_;
-     }
+  }
 
 //~TODO: Return the system's kernel identifier (string)
 std::string System::Kernel() { return LinuxParser::Kernel();}   //return string(); 

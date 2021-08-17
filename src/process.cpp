@@ -27,7 +27,7 @@ float Process::CpuUtilization()  // { return 0; }
 {
 float utime, stime, cutime, cstime, starttime, total_time, cpu_usage, seconds;
 int x=1;
- std::ifstream upstream(linux_parser::kProcDirectory + to_string(this->pid_)+ linux_parser::kStatFilename);
+ std::ifstream upstream(LinuxParser::kProcDirectory + to_string(this->pid_)+ LinuxParser::kStatFilename);
    if (upstream.is_open())
    {
      std::istream_iterator<float> begin(upstream);
@@ -87,7 +87,9 @@ long int Process::UpTime() { return LinuxParser::UpTime(this->pid_); }
 
 //~TODO: Overload the "less than" comparison operator for Process objects
 
-bool Process::operator<(Process const& a) const 
+bool Process::operator<(Process & a)  
 { 
-    return a.linux_parser::CpuUtilization() > this->linux_parser::CpuUtilization();
+   //return (a.LinuxParser::CpuUtilization() > this->LinuxParser::CpuUtilization());
+    return (a.CpuUtilization() > this->CpuUtilization());
+
 }
