@@ -158,12 +158,12 @@ long LinuxParser::UpTime()
 long LinuxParser::Jiffies() 
 { 
   // long jiffies;
-   return LinuxParser::UpTime();// sysconf(_SC_CLK_TCK);
+   return (LinuxParser::UpTime()/(sysconf(_SC_CLK_TCK)));
   
 }
 
 //~TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
+
 long LinuxParser::ActiveJiffies(int pid_)
 {
  long sum=0, utime=0, cstime=0;
@@ -172,8 +172,8 @@ long LinuxParser::ActiveJiffies(int pid_)
    if (upstream.is_open())
    {
     std::istream_iterator<long> begin(upstream);
-    std::istream_iterator<long>eof;
-      while ((begin!=eof) && (x<=18))
+    std::istream_iterator<long>eos;
+      while ((*begin!=upstream.eof()) && (x<=18))
       {
            if (x==14)
            utime = *begin;
@@ -217,9 +217,9 @@ long LinuxParser::ActiveJiffies()
 }
 
 //~TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() //{ return 0; }
+long LinuxParser::IdleJiffies() 
 {
-  long idle, iowait, idleJiff=0;
+  long idle=0, iowait=0, idleJiff=0;
   string line;
   
   std::ifstream stream(kProcDirectory + kStatFilename);
@@ -228,13 +228,14 @@ long LinuxParser::IdleJiffies() //{ return 0; }
      {
          std::getline(stream,line);
          const char *cline=line.c_str();
-         sscanf(cline,"%*s:%*d:%*d:%*d:%d:%d", idle, iowait);
+         sscanf(cline,"%*s %*d %*d %*d %ld %ld",&idle, &iowait);
          idleJiff =idle + iowait;
          return idleJiff;
      }
       else throw("proc/stat not accessible");  
 
 }
+
 
 //~TODO: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() 
@@ -296,15 +297,15 @@ int LinuxParser::RunningProcesses()
               RunAvail=true;
               return RunPro;
          }  
-         if (RunAvail=false)
+         if (RunAvail==false)
              { throw (" Running Processes not found");}
      }
       else throw ("proc/meminfo file not accessible");
   
 }
 //~TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid)  //return string(); }
+
+string LinuxParser::Command(int pid)  
 {
    string command;
    string line;
@@ -318,7 +319,7 @@ string LinuxParser::Command(int pid)  //return string(); }
  }
 
 //~TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
+
 string LinuxParser::Ram(int pid)
 {
   float RamNum;
@@ -354,7 +355,7 @@ string LinuxParser::Ram(int pid)
 };
 
 //~TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
+
 string LinuxParser::Uid(int pid)
  {  
    string userID;
@@ -379,8 +380,8 @@ string LinuxParser::Uid(int pid)
   }
 
 //~TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid) //{ return string(); }
+
+string LinuxParser::User(int pid) 
 {
  string username, line, user, userid, uid;
  bool uidfound=false;
@@ -415,7 +416,7 @@ string LinuxParser::User(int pid) //{ return string(); }
        while (std::getline(uidstream,line))
        {
          const char *cline=line.c_str();
-         sscanf(cline,"%s:%*s:%d:%*s", username, userid);
+         sscanf(cline,"%s %*s %s %*s", &username, &userid);
             if (uid.compare(userid))
             { return username; }   
          }
@@ -426,22 +427,22 @@ string LinuxParser::User(int pid) //{ return string(); }
 }
 
 //~TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid)    //{ return 0; }
+
+long LinuxParser::UpTime(int pid)    
 {
 int x=1;
  std::ifstream upstream(kProcDirectory + to_string(pid) + kStatFilename);
    if (upstream.is_open())
     {
         std::istream_iterator <long> begin(upstream);
-        std::istream_iterator<long>eof();
-          while (begin!=eof() && x<=22)
+        std::istream_iterator<long> eos;
+          while ((*begin!=upstream.eof()) && (x<=22))
           {
             begin++;
             x++;
           }
-              if (begin==eof())
-                 { throw ("UpTime not found"); }
+            //  if (*begin==(upstream.eof())
+               //  { throw ("UpTime not found"); }
         
           return *begin;
     }
