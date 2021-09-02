@@ -12,12 +12,15 @@ float Processor::Utilization() {
     std::vector<std::string>cpuUtil = LinuxParser::CpuUtilization();
     for (std::string start : cpuUtil)
          { sumstr = sumstr + start;}
-    std::istringstream stream(sumstr);
-          
-    stream >> activetimeS >> idletimeS;
+      std::istringstream stream(sumstr);
+      stream >> activetimeS >> idletimeS;
+      if ((idletimeS!="")&&(activetimeS!="")){
+         idletime =std::stoi(idletimeS);
+         activetime =std::stoi(activetimeS);
+         cpuutil=(1-(idletime/idletime + activetime)) * 100;
+         return cpuutil;
 
-    idletime =std::stoi(idletimeS);
-    activetime =std::stoi(activetimeS);
-    cpuutil=(1-(idletime/idletime + activetime)) * 100;
-    return cpuutil;
+       }   
+     
+       else return 0; 
 }

@@ -1,4 +1,4 @@
-#include <dirent.h>
+     #include <dirent.h>
 #include <unistd.h>
 #include <sstream>
 #include <string>
@@ -10,7 +10,6 @@
 #include <cstdio>
 #include <fstream>
 #include <stdio.h>
-
 
 
 //namespace fs=std::filesystem;
@@ -60,32 +59,31 @@ string LinuxParser::Kernel() {
 
 // ~BONUS: Update this to use std::filesystem
 vector<int> LinuxParser::Pids() {
-  vector<int> pids;
- /* ifstream prostream(kProcDirectory);
-    for (const auto & entry : fs::directory_iterator(kProcDirectory))
-        if (isdigit(entry))
-        pids.push_back(entry);
-        return pids;
- */
-
+   vector<int> pids;
    DIR* directory = opendir(kProcDirectory.c_str());
-  struct dirent* file;
-  while ((file = readdir(directory)) != nullptr) {
-    // Is this a directory?
-    if (file->d_type == DT_DIR) {
-      // Is every character of the name a digit?
-      string filename(file->d_name);
-      if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = stoi(filename);
-        pids.push_back(pid);
-      }
-    }
+   struct dirent* file;
+   while ((file = readdir(directory)) != nullptr) {
+       // Is this a directory?
+      if (file->d_type == DT_DIR) {
+        // Is every character of the name a digit?
+        string filename(file->d_name);
+        if (std::all_of(filename.begin(), filename.end(), isdigit)) {
+             int pid = stoi(filename);
+             pids.push_back(pid);
+           
+         }
+     }
   }
   closedir(directory);
   return pids;
 }
   
-
+/* ifstream prostream(kProcDirectory);
+    for (const auto & entry : fs::directory_iterator(kProcDirectory))
+        if (isdigit(entry))
+        pids.push_back(entry);
+        return pids;
+ */
 
 
 // ~TODO: Read and return the system memory utilization
@@ -252,19 +250,18 @@ vector<string> LinuxParser::CpuUtilization(){
 
 //~ TODO: Read and return the total number of processes
 int LinuxParser::TotalProcesses(){ 
-     string line;
      bool procAvail=false;
-     string key;
-     int totalProc;
+     string line, key, totalProc;
      std::ifstream stream(kProcDirectory + kStatFilename);
      if (stream.is_open()){
          while(std::getline(stream, line)){
               std::istringstream totstream(line);
               totstream >> key;
-              if (key.compare("processes")) { 
+              if (key.compare("processes")==0) { 
                      totstream >> totalProc;
                      procAvail=true;
-                     return totalProc;
+                     if (totalProc!="")
+                        return stoi(totalProc);
 
                }
           }
@@ -279,20 +276,22 @@ int LinuxParser::TotalProcesses(){
 
 //~TODO: Read and return the number of running processes
 int LinuxParser::RunningProcesses(){ 
-     int RunPro;
      bool RunAvail=false;
-     string key, line;
+     string key, line, RunPro;
      std::ifstream runstream(kProcDirectory + kStatFilename);
      if (runstream.is_open()) {
          while (std::getline(runstream, line)){
-             std::istringstream runstream(line);
-              if (key == "procs_running") 
-              runstream >> RunPro;
-              RunAvail=true;
-              return RunPro;
+                std::istringstream runstream(line);
+                runstream >> key;
+                if (key.compare("procs_running")==0){ 
+                   runstream >> RunPro;
+                   RunAvail=true; 
+                   if (RunPro!="")
+                      {return stoi(RunPro);}
+              }
          }  
 
-    if (RunAvail==false)
+        if (RunAvail==false)
 
              { throw (" Running Processes not found");}
 
@@ -317,26 +316,26 @@ string LinuxParser::Command(int pid) {
 
 //~TODO: Read and return the memory used by a process
 
-string LinuxParser::Ram(int pid)
-{
+string LinuxParser::Ram(int pid) {
   float RamNum;
+ // int Ramint;
   string vmsize, line, RamSize;
   bool RamFound=false;
   std::ifstream streamMem(kProcDirectory + to_string(pid) + kStatusFilename);
-     if (streamMem.is_open())
-      {   
+     if (streamMem.is_open()) {   
            while (std::getline(streamMem, line)){
-                std::istringstream stream(line);
+                 std::istringstream stream(line);
                  stream >> vmsize;
-                 if (vmsize.compare("VmSize:")) {
+                 if (vmsize.compare("VmSize:")==0) {
                       stream >> RamNum >> RamSize;
                       RamFound=true;
-                             if (RamSize.compare("mB"))
-                                { RamNum*=1024;}
-                             else if (RamSize.compare("gB"))
-                                {RamNum*=1024*1024;}         
+                            // if (RamSize.compare("mB"))
+                            //    { RamNum*=1024;}
+                              if (RamSize.compare("gB"))
+                                {RamNum/=1024;}         
                  }    
                  if (RamFound==true) {
+                      //Ramint=RamNum;
                       return std::to_string(RamNum);
                       break;
                   }    
@@ -359,7 +358,7 @@ string LinuxParser::Uid(int pid){
       if (uidstream.is_open()){ 
           while (std::getline(uidstream, line)) {
              std::istringstream dstream(line);
-             if (userID.compare ("uid")) 
+             if (userID.compare("uid:")) 
              dstream >> userID;
              uidfound=true;
              return userID;
@@ -378,42 +377,18 @@ string LinuxParser::Uid(int pid){
 //~TODO: Read and return the user associated with a process
 
 string LinuxParser::User(int pid) {
-    string username_string, line, user, userid_string, uid;
+    string username_string, line, user,userid_string, uid, userid_check;
     char username[20], userid[20];
-    bool uidfound=false;
-    std::ifstream userstream(kProcDirectory +to_string(pid) + kStatusFilename);
-    if (userstream.is_open()){
-       while (std::getline(userstream,line)){
-             std::istringstream sstream(line);
-             sstream >> user;
-             if (user.compare("uid:")) {
-                sstream >> uid;
-                uidfound=true;
-                if (uidfound)
-                   {break;}
-             
-              }
-  
-          }
-       
-    }
-     
-     else throw ("/etc/password file is not accessible");
-     
-   if (uidfound==false)  {
-        throw (" uid not found");
-      
-    }
- 
     std::ifstream uidstream(kPasswordPath); //rename
     if (uidstream.is_open()) {
        while (std::getline(uidstream,line)){
-           const char *cline=line.c_str();
-           sscanf(cline,"%s %*s %s %*s", username, userid);
-           username_string =username;
-           userid_string=userid;
-           if (uid.compare(userid_string))
-              { return username_string; }   
+             const char *cline=line.c_str();
+             sscanf(cline,"%s:%*s:%s:%*s", username, userid);
+             username_string = username;
+             userid_check = userid;
+             userid_string = LinuxParser::Uid(pid);
+             if (userid_string.compare(userid_check))
+                { return username_string; }   
        
          }
        
