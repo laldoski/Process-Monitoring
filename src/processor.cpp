@@ -26,7 +26,7 @@ float Processor::Utilization() {
          activeTime = activeJiff/sysconf(_SC_CLK_TCK);
          myfile << "activeTime(float):"  << activeTime << std::endl;  
          myfile << "idleTime(float):"  << idleTime << std::endl;
-         cpuutil=(1-(idleTime/(idleTime + activeTime))) * 100;
+         cpuutil=(1-(idleTime/(idleTime + activeTime)) ) ;
          myfile << "cpuutil:"  << cpuutil << std::endl; 
          return cpuutil;
 

@@ -68,23 +68,25 @@ vector<int> LinuxParser::Pids() {
       if (file->d_type == DT_DIR) {
         // Is every character of the name a digit?
         string filename(file->d_name);
+ 
         if (std::all_of(filename.begin(), filename.end(), isdigit)) {
              int pid = stoi(filename);
-             pids.push_back(pid);
-           
+            pids.push_back(pid);        
          }
      }
-  }
+   }
   closedir(directory);
   return pids;
 }
   
-/* ifstream prostream(kProcDirectory);
+/*ifstream prostream(kProcDirectory);
     for (const auto & entry : fs::directory_iterator(kProcDirectory))
-        if (isdigit(entry))
+        if (isdigit(entry)){
         pids.push_back(entry);
         return pids;
+        }
  */
+ 
 
 
 // ~TODO: Read and return the system memory utilization
