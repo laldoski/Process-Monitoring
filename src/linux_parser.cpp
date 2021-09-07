@@ -1,4 +1,4 @@
-     #include <dirent.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <sstream>
 #include <string>
@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <fstream>
 #include <stdio.h>
+#include <iostream>
 
 
 //namespace fs=std::filesystem;
@@ -239,8 +240,12 @@ long LinuxParser::IdleJiffies() {
 vector<string> LinuxParser::CpuUtilization(){
      vector<string> cpuUtil;
      string activeJiff, idleJiff;
+     std::ofstream myfile;
+     myfile.open("cpu.txt");
      activeJiff=to_string(ActiveJiffies());
+     myfile << "activejiff:" << activeJiff << std::endl;
      idleJiff=to_string(IdleJiffies());
+     myfile << "idleJiff:" << activeJiff << std::endl;
      cpuUtil.push_back(activeJiff);
      cpuUtil.push_back(idleJiff);
             // cpuutil=(1-(idle/systotal_time);
@@ -288,12 +293,11 @@ int LinuxParser::RunningProcesses(){
                    RunAvail=true; 
                    if (RunPro!="")
                       {return stoi(RunPro);}
-              }
+                }
          }  
 
         if (RunAvail==false)
-
-             { throw (" Running Processes not found");}
+           { throw (" Running Processes not found");}
 
      }
 
@@ -318,7 +322,7 @@ string LinuxParser::Command(int pid) {
 
 string LinuxParser::Ram(int pid) {
   float RamNum;
- // int Ramint;
+ int Ramint;
   string vmsize, line, RamSize;
   bool RamFound=false;
   std::ifstream streamMem(kProcDirectory + to_string(pid) + kStatusFilename);
@@ -329,14 +333,14 @@ string LinuxParser::Ram(int pid) {
                  if (vmsize.compare("VmSize:")==0) {
                       stream >> RamNum >> RamSize;
                       RamFound=true;
-                            // if (RamSize.compare("mB"))
-                            //    { RamNum*=1024;}
-                              if (RamSize.compare("gB"))
-                                {RamNum/=1024;}         
+                             if (RamSize.compare("kB"))
+                                  { RamNum*=1024; }
+                              else if (RamSize.compare("gB"))
+                                  { RamNum/=1024; }         
                  }    
                  if (RamFound==true) {
-                      //Ramint=RamNum;
-                      return std::to_string(RamNum);
+                      Ramint=RamNum;
+                      return std::to_string(Ramint);
                       break;
                   }    
               
@@ -378,17 +382,19 @@ string LinuxParser::Uid(int pid){
 
 string LinuxParser::User(int pid) {
     string username_string, line, user,userid_string, uid, userid_check;
-    char username[20], userid[20];
+    char username[20]={0}, userid[20]={0};
     std::ifstream uidstream(kPasswordPath); //rename
     if (uidstream.is_open()) {
        while (std::getline(uidstream,line)){
              const char *cline=line.c_str();
-             sscanf(cline,"%s:%*s:%s:%*s", username, userid);
+             std::ofstream myfile;
+             sscanf(cline, "%[^':']:%*[^':']:%[^':']:%*[^':']", username, userid);
              username_string = username;
-             userid_check = userid;
+             myfile << "username_string:" << username_string <<std::endl;
+             userid_check = uid;
              userid_string = LinuxParser::Uid(pid);
              if (userid_string.compare(userid_check))
-                { return username_string; }   
+                 { return username_string; }   
        
          }
        
@@ -399,25 +405,33 @@ string LinuxParser::User(int pid) {
    
 }
 
+
 //~TODO: Read and return the uptime of a process
 
 long LinuxParser::UpTime(int pid) {
      int x=1;
+     string uptimeS;
+     long uptime=0;
      std::ifstream upstream(kProcDirectory + to_string(pid) + kStatFilename);
      if (upstream.is_open()){
-         std::istream_iterator <long> begin(upstream);
-         std::istream_iterator<long> eos;
-         while ((*begin!=upstream.eof()) && (x<=22)){
-               begin++;
-               x++;
+         std::istream_iterator<string>begin(upstream);
+         std::istream_iterator<string>eos;
+         while ((begin!=eos) && (x<=22)){
+               if (x==22){
+                uptimeS=*begin; break;
+               }
+                else 
+               { begin++; x++; }
             }
-            //  if (*begin==(upstream.eof())
-               //  { throw ("UpTime not found"); }
-        
-        return *begin;
-    }
-   
-    else throw ("process stat file not accessible");
+
+     }
+          
+        if (uptimeS!=""){
+          uptime=std::stol(uptimeS);
+          return (uptime/sysconf(_SC_CLK_TCK)); 
+         }
+        else return 0;    
+
 }
 
 
