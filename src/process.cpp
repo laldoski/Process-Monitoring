@@ -35,38 +35,38 @@ float Process::CpuUtilization(){  // { return 0; }{
        float utime, stime, cutime, cstime, starttime, total_time,
        cpu_usage=0, seconds;
        int x=1;
-       std::ofstream myfile; 
+     //  std::ofstream myfile; 
      //  string pidtext=this->pid_;
-       myfile.open("output_"+ to_string(this->pid_)+".txt");
+     //  myfile.open("output_"+ to_string(this->pid_)+".txt");
       std::ifstream upstream(LinuxParser::kProcDirectory + to_string(this->pid_) + 
        LinuxParser::kStatFilename);
-       myfile <<  LinuxParser::kProcDirectory + to_string(this->pid_) + 
-       LinuxParser::kStatFilename << std::endl;
+     //  myfile <<  LinuxParser::kProcDirectory + to_string(this->pid_) + 
+      // LinuxParser::kStatFilename << std::endl;
        if (upstream.is_open()){
            std::istream_iterator<string> begin(upstream);
            std::istream_iterator<string> eos;
-            myfile << "pid:" << this->pid_ <<std::endl;
+         //   myfile << "pid:" << this->pid_ <<std::endl;
            while ((begin!=eos) && (x<=23)){  
            switch(x){
                case 14:
                utime=std::stof(*begin);
-               myfile << "utime case 14:" << utime << std::endl;
+            //   myfile << "utime case 14:" << utime << std::endl;
                break;
                case 15:
                stime=std::stof(*begin);
-                myfile << "stime case 15:" << stime << std::endl;
+            //    myfile << "stime case 15:" << stime << std::endl;
                break;
                case 16:
                cutime=std::stof(*begin);
-               myfile << "cutime case 16:" << cutime << std::endl;
+            //   myfile << "cutime case 16:" << cutime << std::endl;
                break; 
                case 17:
                cstime=std::stof(*begin);
-               myfile << "cs time case 17:" << cstime << std::endl;
+           //    myfile << "cs time case 17:" << cstime << std::endl;
                break;
                case 22:
                starttime=std::stof(*begin);
-               myfile << "start time case 22:" << starttime << std::endl;
+            //   myfile << "start time case 22:" << starttime << std::endl;
                break;
                
 
@@ -77,12 +77,12 @@ float Process::CpuUtilization(){  // { return 0; }{
 
     total_time = utime + stime;
     seconds =LinuxParser::UpTime() - (starttime/sysconf(_SC_CLK_TCK));
-    myfile << "uptime:" << LinuxParser::UpTime(this->pid_) << std::endl;
+  //  myfile << "uptime:" << LinuxParser::UpTime(this->pid_) << std::endl;
     cpu_usage  = (((total_time / sysconf(_SC_CLK_TCK)) / seconds )*100);
-    myfile << "total_time:" <<total_time << std::endl;
-    myfile << "seconds:"<< seconds << std::endl;
-    myfile << "cpu_usage:" << cpu_usage << std::endl;
-    myfile.close();
+  //  myfile << "total_time:" <<total_time << std::endl;
+  ////  myfile << "seconds:"<< seconds << std::endl;
+  //  myfile << "cpu_usage:" << cpu_usage << std::endl;
+  //  myfile.close();
     return cpu_usage;
 
   }

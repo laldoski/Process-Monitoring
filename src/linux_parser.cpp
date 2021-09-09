@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-//#include <filesystem> 
+#include <experimental/filesystem> 
 #include <ctype.h>
 #include "linux_parser.h"
 #include <iterator>
@@ -11,9 +11,11 @@
 #include <fstream>
 #include <stdio.h>
 #include <iostream>
+#include <cctype>
+#include <locale>
+#include <algorithm>
 
-
-//namespace fs=std::filesystem;
+namespace fs=std::experimental::filesystem;
 
 
 using std::stof;
@@ -59,7 +61,7 @@ string LinuxParser::Kernel() {
 }
 
 // ~BONUS: Update this to use std::filesystem
-vector<int> LinuxParser::Pids() {
+/*vector<int> LinuxParser::Pids() {
    vector<int> pids;
    DIR* directory = opendir(kProcDirectory.c_str());
    struct dirent* file;
@@ -78,16 +80,33 @@ vector<int> LinuxParser::Pids() {
   closedir(directory);
   return pids;
 }
-  
-/*ifstream prostream(kProcDirectory);
-    for (const auto & entry : fs::directory_iterator(kProcDirectory))
-        if (isdigit(entry)){
-        pids.push_back(entry);
-        return pids;
-        }
- */
- 
+*/
 
+vector<int> LinuxParser::Pids() {
+    std::ifstream prostream(kProcDirectory);
+    vector<string> pidsStr;
+    vector<int> pidsNum;
+    string value; 
+    for (const auto & entry : fs::directory_iterator(kProcDirectory)){
+         if (is_directory(entry)==true){ 
+            std::istringstream directory(entry.path());
+            while (std::getline(directory,value, '/')){
+                   if (value.find_first_not_of("0123456789")==std::string::npos){
+                       pidsStr.push_back(value);
+                       std::transform(pidsStr.begin() , pidsStr.end(), std::back_inserter(pidsNum),
+                       [](const std:: string & str) { return std::stoi(str);}) ;
+                       return pidsNum;
+                    } 
+               }
+     
+          }
+     
+     }
+   
+     return {};  
+  
+}
+ 
 
 // ~TODO: Read and return the system memory utilization
 float LinuxParser::MemoryUtilization(){ 
@@ -311,7 +330,8 @@ int LinuxParser::RunningProcesses(){
 string LinuxParser::Command(int pid) {
      string command;
      string line;
-     std::ifstream commandstream(kProcDirectory + to_string (pid) + kCmdlineFilename);
+     std::ifstream commandstream(kProcDirectory + to_string (pid) +
+     kCmdlineFilename);
      if (commandstream.is_open()){  
           getline(commandstream, line);
           return line;
@@ -323,36 +343,32 @@ string LinuxParser::Command(int pid) {
 //~TODO: Read and return the memory used by a process
 
 string LinuxParser::Ram(int pid) {
-  float RamNum;
- int Ramint;
-  string vmsize, line, RamSize;
-  bool RamFound=false;
-  std::ifstream streamMem(kProcDirectory + to_string(pid) + kStatusFilename);
-     if (streamMem.is_open()) {   
-           while (std::getline(streamMem, line)){
-                 std::istringstream stream(line);
-                 stream >> vmsize;
-                 if (vmsize.compare("VmSize:")==0) {
-                      stream >> RamNum >> RamSize;
-                      RamFound=true;
-                             if (RamSize.compare("kB"))
-                                  { RamNum*=1024; }
-                              else if (RamSize.compare("gB"))
-                                  { RamNum/=1024; }         
+   int RamNum=0;
+   string vmsize, line, RamSize;
+   bool RamFound=false;
+   std::ifstream streamMem(kProcDirectory + to_string(pid) + kStatusFilename);
+   if (streamMem.is_open()) {   
+       while (std::getline(streamMem, line)){
+              std::istringstream stream(line);
+               stream >> vmsize;
+                 if (vmsize.compare("VmSize:")==0) { 
+                    stream >> RamNum >> RamSize; 
+                    RamFound=true;
+                       if (RamSize.compare("kB")==0)
+                            { RamNum=RamNum/1024; }
+                       else if (RamSize.compare("gB")==0)
+                            { RamNum=RamNum*1024; }                       
                  }    
-                 if (RamFound==true) {
-                      Ramint=RamNum;
-                      return std::to_string(Ramint);
-                      break;
-                  }    
-              
-            }
-            
-       }
-  
-    else throw (" proc/pid/status file not accessible");
-    return 0;
-};
+                 if (RamFound==true) 
+                    { return  std::to_string(RamNum); }
+                      
+          }        
+     }   
+     else throw (" Ram size not found ");
+      return 0;
+     
+}
+
 
 //~TODO: Read and return the user ID associated with a process
 
