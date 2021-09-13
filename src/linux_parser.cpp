@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <filesystem> 
+//#include <filesystem> 
 #include <ctype.h>
 #include "linux_parser.h"
 #include <iterator>
@@ -15,7 +15,7 @@
 #include <locale>
 #include <algorithm>
 
-namespace fs=std::filesystem;
+//namespace fs=std::filesystem;
 
 
 using std::stof;
@@ -61,7 +61,7 @@ string LinuxParser::Kernel() {
 }
 
 // ~BONUS: Update this to use std::filesystem
-/*vector<int> LinuxParser::Pids() {
+vector<int> LinuxParser::Pids() {
    vector<int> pids;
    DIR* directory = opendir(kProcDirectory.c_str());
    struct dirent* file;
@@ -80,9 +80,9 @@ string LinuxParser::Kernel() {
   closedir(directory);
   return pids;
 }
-*/
 
-vector<int> LinuxParser::Pids() {
+
+/*vector<int> LinuxParser::Pids() {
     std::ifstream prostream(kProcDirectory);
     vector<string> pidsStr;
     vector<int> pidsNum;
@@ -107,7 +107,7 @@ vector<int> LinuxParser::Pids() {
   
 }
  
-
+*/
 // ~TODO: Read and return the system memory utilization
 float LinuxParser::MemoryUtilization(){ 
       bool MemTotalfound=false;
