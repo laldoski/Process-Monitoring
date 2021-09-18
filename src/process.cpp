@@ -66,6 +66,7 @@ float Process::CpuUtilization(){
          return cpu_usage;
        }
    else throw ("/proc/[pid]/stat not accessible");
+   return 0;
 }
 
 //DONE: Return the command that generated this process

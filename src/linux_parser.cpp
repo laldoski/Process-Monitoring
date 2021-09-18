@@ -55,7 +55,6 @@ string LinuxParser::Kernel() {
       std::getline(stream, line);
       std::istringstream linestream(line);
       linestream >> os >> version >> kernel;
-
     }
     return kernel;
 }
@@ -98,13 +97,9 @@ vector<int> LinuxParser::Pids() {
                        return pidsNum;
                     } 
                }
-     
           }
-     
      }
-   
      return {};  
-  
 }
  
 */
@@ -137,7 +132,7 @@ float LinuxParser::MemoryUtilization(){
                   if (MemTotalfound && MemAvilfound)
                             { break;}
                }
-               if (MemTotalfound==false || MemAvilfound==false )
+               if(MemTotalfound==false || MemAvilfound==false )
                     { throw (" MemTotal or MemAvailable not found"); }
                MemUtil=((MemTotal - MemAvil)/MemTotal);
                return MemUtil;
@@ -161,14 +156,14 @@ long LinuxParser::UpTime(){
                if (suspendFound && idleFound) 
                   {break;}
           }
-           return suspend; 
+          return suspend; 
     } 
      else throw ("proc/uptime file not accessible");
 }
 
 //DONE: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies(){ 
-     return (LinuxParser::UpTime() / (sysconf(_SC_CLK_TCK))); // long jiffies;
+     return (LinuxParser::UpTime() / (sysconf(_SC_CLK_TCK))); 
 }
 
 
@@ -188,7 +183,7 @@ long LinuxParser::ActiveJiffies(int pid_){
                  begin++;
                  x++; 
                }
-       return sum = utime + cstime;
+        return sum = utime + cstime;
      }
    else throw ("/proc/[pid]/stat not accessible");
    return 0;
@@ -215,7 +210,8 @@ long LinuxParser::ActiveJiffies(){
               }
           throw (" Running Processes not found");
      } 
-     else throw ("proc/meminfo file not accessible"); 
+     else throw ("proc/meminfo file not accessible");
+     return 0;
 }
 
 //DONE: Read and return the number of idle jiffies for the system
@@ -230,7 +226,8 @@ long LinuxParser::IdleJiffies() {
          idleJiff =idle + iowait;
          return idleJiff;
      } 
-     else throw("proc/stat not accessible");  
+     else throw("proc/stat not accessible");
+     return 0;  
 }
 
 
@@ -327,7 +324,7 @@ string LinuxParser::Ram(int pid) {
           }        
      }   
      else throw (" Ram size not found ");
-     return 0;  
+     return "0";
 }
 
 
@@ -350,7 +347,7 @@ string LinuxParser::Uid(int pid){
                   {throw ("UID not found");}
           }
      }
-      return 0;
+    return "0";
 }
 
 //DONE: Read and return the user associated with a process
@@ -372,6 +369,7 @@ string LinuxParser::User(int pid) {
           }    
      }  
      throw ("could not find username");
+     return "0";
 }
 
 
@@ -388,8 +386,8 @@ long LinuxParser::UpTime(int pid) {
                if (location==22) {
                   uptimeS = *begin; 
                   break;
-                }
-               else {
+               }   
+                else {
                    begin++;
                    location++;
                }
