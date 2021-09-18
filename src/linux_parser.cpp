@@ -299,6 +299,7 @@ string LinuxParser::Command(int pid) {
           return line;
      }
       else throw (" the proces cmdline file not accessible ");
+      return "0";
 }
 
 //DONE: Read and return the memory used by a process
