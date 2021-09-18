@@ -62,7 +62,7 @@ float Process::CpuUtilization(){
               }
          total_time = utime + stime + cutime + cstime;
          seconds =LinuxParser::UpTime() - (starttime/sysconf(_SC_CLK_TCK));
-         cpu_usage  = (((total_time / sysconf(_SC_CLK_TCK)) / seconds )*100);
+         cpu_usage  = (((total_time / sysconf(_SC_CLK_TCK)) / seconds ));
          return cpu_usage;
        }
    else throw ("/proc/[pid]/stat not accessible");
