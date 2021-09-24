@@ -48,13 +48,16 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-   string os, kernel, version;
+   string os;
+   string kernel;
+   string version;
    string line;
    std::ifstream stream(kProcDirectory + kVersionFilename);
    if (stream.is_open()) {
       std::getline(stream, line);
       std::istringstream linestream(line);
       linestream >> os >> version >> kernel;
+      stream.close();
     }
     return kernel;
 }
@@ -72,6 +75,8 @@ vector<int> LinuxParser::Pids() {
  
         if (std::all_of(filename.begin(), filename.end(), isdigit)) {
              int pid = stoi(filename);
+             if  ((LinuxParser::Ram(pid) !="") && (LinuxParser::Command(pid) !="")) 
+            // && (Process::CpuUtilization() !=0.0))
             pids.push_back(pid);        
          }
      }
@@ -104,58 +109,33 @@ vector<int> LinuxParser::Pids() {
  
 */
 //DONE: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization(){ 
-      bool MemTotalfound=false, MemAvilfound=false;
-      float MemTotal, MemAvil, MemUtil;
-      string  namedescription, line, sizedescripter;
-      std::ifstream streamMem(kProcDirectory + kMeminfoFilename);
-      if(streamMem.is_open()) {   
-           while(std::getline(streamMem,line)){
-                 std::istringstream stream(line);
-                 stream >> namedescription;
-                 if(namedescription.compare("MemTotal:")==0){ 
-                      stream >> MemTotal >> sizedescripter; 
-                      MemTotalfound = true;
-                      if(sizedescripter.compare("mB"))
-                            { MemTotal*=1024; }
-                      else if( sizedescripter.compare("gB"))
-                            { MemTotal*=1024*1024; }
-                    }    
-                 if(namedescription.compare("MemAvailable:")==0){ 
-                      stream >> MemAvil >> sizedescripter; 
-                      MemAvilfound= true;
-                      if(sizedescripter.compare("mB"))
-                            { MemAvil*=1024; }
-                      else if(sizedescripter.compare("gB"))
-                            { MemAvil*=1024*1024; }
-                    }
-                  if (MemTotalfound && MemAvilfound)
-                            { break;}
-               }
-               if(MemTotalfound==false || MemAvilfound==false )
-                    { throw (" MemTotal or MemAvailable not found"); }
-               MemUtil=((MemTotal - MemAvil)/MemTotal);
-               return MemUtil;
-          }
-         else throw ("proc/Meminfo file not accessible");  
+  float LinuxParser::MemoryUtilization() {
+    string memTotal = "MemTotal:";
+    string memFree = "MemFree:";
+    float Total = findValueByKey<float>(memTotal, kMeminfoFilename);
+    float Free = findValueByKey<float>(memFree, kMeminfoFilename);
+    return (Total - Free) / Total;
 }
-  
 
 //DONE: Read and return the system uptime
 long LinuxParser::UpTime(){ 
-    long suspend, idle;
-    bool suspendFound=false, idleFound=false;
-    string line;
-    std::ifstream stream(kProcDirectory + kUptimeFilename);
+  long suspend;
+  long idle;
+  bool suspendFound = false;
+  bool idleFound = false;
+  string line;
+  std::ifstream stream(kProcDirectory + kUptimeFilename);
     if (stream.is_open()){
          while (std::getline(stream, line)) {
                std::istringstream stream(line);
                stream >> suspend >> idle;  
                suspendFound=true;
                idleFound=true;
-               if (suspendFound && idleFound) 
-                  {break;}
+               if (suspendFound && idleFound) {
+                    break;
+               }
           }
+          stream.close();
           return suspend; 
     } 
      else throw ("proc/uptime file not accessible");
@@ -169,21 +149,24 @@ long LinuxParser::Jiffies(){
 
 //DONE: Read and return the number of active jiffies for a PID
 long LinuxParser::ActiveJiffies(int pid_){
-     long sum=0, utime=0, cstime=0;
-     int x=1;
-     std::ifstream upstream (kProcDirectory + to_string (pid_) + kStatFilename);
+   long sum=0;
+   long utime=0;
+   long cstime=0;
+   int x=1;
+   std::ifstream upstream (kProcDirectory + to_string (pid_) + kStatFilename);
      if (upstream.is_open()) {
-           std::istream_iterator<long> begin(upstream);
-           std::istream_iterator<long>eos;
-           while ((*begin!=upstream.eof()) && (x<=18)) {
-                 if (x==14)
-                      utime = *begin;
-                 else if (x==17)
-                      {cstime = *begin;}   
-                 begin++;
-                 x++; 
-               }
+        std::istream_iterator<long> begin(upstream);
+        std::istream_iterator<long>eos;
+        while ((*begin!=upstream.eof()) && (x<=18)) {
+              if (x==14)
+                 utime = *begin;
+               else if (x==17)
+                 {cstime = *begin;}   
+               begin++;
+               x++; 
+          }
         return sum = utime + cstime;
+        upstream.close();  
      }
    else throw ("/proc/[pid]/stat not accessible");
    return 0;
@@ -192,22 +175,32 @@ long LinuxParser::ActiveJiffies(int pid_){
 
 //DONE: Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies(){
-     string line, cpu;
-     long ActiveJiff, user, nice, system, idle, iowait, irq, 
-     softriq, steal, guest, guest_nice;
-     std::ifstream actstream(kProcDirectory + kStatFilename);
-     if (actstream.is_open()){
-           while (std::getline(actstream, line)){
-                  std::istringstream stream(line);
-                  stream >> cpu;
-                  if (cpu.compare("cpu")) {
-                        stream >> user >> nice >> system >> idle >> 
-                        iowait >> irq >> softriq >> steal >> guest >> guest_nice;
-                        ActiveJiff = user + nice + system + idle + iowait + 
-                        irq + softriq + steal+ guest + guest_nice;
-                        return ActiveJiff;
-                    }    
-              }
+  string line, cpu;
+  long ActiveJiff;
+  long user;
+  long nice;
+  long system;
+  long idle;
+  long iowait;
+  long irq; 
+  long softriq;
+  long steal;
+  long guest;
+  long guest_nice;
+  std::ifstream actstream(kProcDirectory + kStatFilename);
+    if (actstream.is_open()){
+       while (std::getline(actstream, line)){
+             std::istringstream stream(line);
+            stream >> cpu;
+             if (cpu.compare(filterCpu)) {
+                 stream >> user >> nice >> system >> idle >> 
+                 iowait >> irq >> softriq >> steal >> guest >> guest_nice;
+                 ActiveJiff = user + nice + system + idle + iowait + 
+                 irq + softriq + steal+ guest + guest_nice;
+                 return ActiveJiff;
+               } 
+                   //  actstream.close();  
+          }
           throw (" Running Processes not found");
      } 
      else throw ("proc/meminfo file not accessible");
@@ -216,15 +209,18 @@ long LinuxParser::ActiveJiffies(){
 
 //DONE: Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() {
-     long idle=0, iowait=0, idleJiff=0;
-     string line;
-     std::ifstream stream(kProcDirectory + kStatFilename);
+   long idle=0;
+   long iowait=0;
+   long idleJiff=0;
+   string line;
+   std::ifstream stream(kProcDirectory + kStatFilename);
      if (stream.is_open()) {
          std::getline(stream,line);
          const char *cline=line.c_str();
          sscanf(cline,"%*s %*d %*d %*d %ld %ld",&idle, &iowait);
          idleJiff =idle + iowait;
          return idleJiff;
+         stream.close();
      } 
      else throw("proc/stat not accessible");
      return 0;  
@@ -233,30 +229,35 @@ long LinuxParser::IdleJiffies() {
 
 //DONE: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization(){
-     vector<string> cpuUtil;
-     string activeJiff, idleJiff;
-     activeJiff=to_string(ActiveJiffies());
-     idleJiff=to_string(IdleJiffies());
-     cpuUtil.push_back(activeJiff);
-     cpuUtil.push_back(idleJiff);      
-     return cpuUtil;  
+  vector<string> cpuUtil;
+  string activeJiff;
+  string  idleJiff;
+  activeJiff = to_string(ActiveJiffies());
+  idleJiff = to_string(IdleJiffies()); 
+  cpuUtil.push_back(activeJiff);
+  cpuUtil.push_back(idleJiff);      
+  return cpuUtil;  
 }
 
 //DONE: Read and return the total number of processes
 int LinuxParser::TotalProcesses(){ 
-     bool procAvail=false;
-     string line, key, totalProc;
-     std::ifstream stream(kProcDirectory + kStatFilename);
+   bool procAvail=false;
+   string line;
+   string key;
+   string totalProc;
+   std::ifstream stream(kProcDirectory + kStatFilename);
      if(stream.is_open()){
          while(std::getline(stream, line)){
               std::istringstream totstream(line);
               totstream >> key;
-              if(key.compare("processes")==0) { 
-                     totstream >> totalProc;
-                     procAvail=true;
-                     if (totalProc!="")
-                        {return stoi(totalProc);}
+              if(key.compare(filterProcesses)==0) { 
+                   totstream >> totalProc;
+                   procAvail=true;
+                   if (totalProc!=""){
+                       return stoi(totalProc);
+                    }
                }
+              // stream.close();
           }
            if(procAvail==false)
               {throw ("processes not found");}
@@ -267,52 +268,49 @@ int LinuxParser::TotalProcesses(){
 
 //DONE: Read and return the number of running processes
 int LinuxParser::RunningProcesses(){ 
-     bool RunAvail=false;
-     string key, line, RunPro;
-     std::ifstream runstream(kProcDirectory + kStatFilename);
+   bool RunAvail=false;
+   string key;
+   string line;
+   string RunPro;
+   std::ifstream runstream(kProcDirectory + kStatFilename);
      if (runstream.is_open()) {
          while (std::getline(runstream, line)){
               std::istringstream runstream(line);
               runstream >> key;
-              if (key.compare("procs_running")==0){ 
+              if (key.compare(filterRunningProcesses)==0){ 
                    runstream >> RunPro;
                    RunAvail=true; 
                    if (RunPro!="")
-                      {return stoi(RunPro);}
-               }
+                   {return stoi(RunPro);}
+               }     
           }  
           if(RunAvail==false)
            { throw (" Running Processes not found");}
+          runstream.close();
      }
       else throw ("proc/meminfo file not accessible");
       return 0;
 }
 
 //DONE: Read and return the command associated with a process
-string LinuxParser::Command(int pid) {
-     string command;
-     string line;
-     std::ifstream commandstream(kProcDirectory + to_string (pid) +
-     kCmdlineFilename);
-     if (commandstream.is_open()){  
-          getline(commandstream, line);
-          return line;
-     }
-      else throw (" the proces cmdline file not accessible ");
-      return "0";
+string LinuxParser::Command(int pid){
+return std::string(getValueOfFile<std::string>(std::to_string(pid) + 
+kCmdlineFilename));
 }
 
 //DONE: Read and return the memory used by a process
 string LinuxParser::Ram(int pid) {
    int RamNum=0;
-   string vmsize, line, RamSize;
+   string vmSize;
+   string line;
+   string RamSize;
    bool RamFound=false;
    std::ifstream streamMem(kProcDirectory + to_string(pid) + kStatusFilename);
    if (streamMem.is_open()) {   
        while (std::getline(streamMem, line)){
               std::istringstream stream(line);
-               stream >> vmsize;
-                 if (vmsize.compare("VmSize:")==0) { 
+               stream >> vmSize;                 
+                 if (vmSize.compare(filterVmSize)==0) { 
                     stream >> RamNum >> RamSize; 
                     RamFound=true;
                        if (RamSize.compare("kB")==0)
@@ -322,7 +320,8 @@ string LinuxParser::Ram(int pid) {
                  }    
                  if (RamFound==true) 
                     { return  std::to_string(RamNum); }           
-          }        
+          } 
+         streamMem.close();       
      }   
      else throw (" Ram size not found ");
      return "0";
@@ -332,13 +331,14 @@ string LinuxParser::Ram(int pid) {
 //DONE: Read and return the user ID associated with a process
 string LinuxParser::Uid(int pid){  
    string userID;
-   string key, line;
+   string key;
+   string line;
    bool uidfound=false;
    std::ifstream uidstream(kProcDirectory + to_string (pid) + kStatusFilename);
       if(uidstream.is_open()){ 
           while(std::getline(uidstream, line)) {
              std::istringstream dstream(line);
-             if(userID.compare("uid:")) {
+             if(userID.compare(filterUID)) {
                   dstream >> userID;
                   uidfound=true;
                   return userID;
@@ -347,17 +347,25 @@ string LinuxParser::Uid(int pid){
              if(uidfound==false)
                   {throw ("UID not found");}
           }
+     // uidstream.close();
      }
     return "0";
 }
 
+
 //DONE: Read and return the user associated with a process
 string LinuxParser::User(int pid) {
-    string username_string, line, user,userid_string, uid, userid_check;
-    char username[20]={0}, userid[20]={0};
-    std::ifstream uidstream(kPasswordPath);
+  string username_string;
+  string line; 
+  string user;
+  string userid_string;
+  string uid;
+  string userid_check;
+  char username[20]={0};
+  char userid[20]={0};
+  std::ifstream uidstream(kPasswordPath);
     if(uidstream.is_open()) {
-       while(std::getline(uidstream,line)){
+       while (std::getline(uidstream,line)){
              const char *cline=line.c_str();
              std::ofstream myfile;
              sscanf(cline, "%[^':']:%*[^':']:%[^':']:%*[^':']", username, userid);
@@ -365,9 +373,11 @@ string LinuxParser::User(int pid) {
              myfile << "username_string:" << username_string <<std::endl;
              userid_check = uid;
              userid_string = LinuxParser::Uid(pid);
-             if (userid_string.compare(userid_check))
-                 { return username_string; }   
-          }    
+             if (userid_string.compare(userid_check)){
+                  return username_string;
+               }   
+          }
+     // uidstream.close();    
      }  
      throw ("could not find username");
      return "0";
@@ -376,10 +386,10 @@ string LinuxParser::User(int pid) {
 
 //DONE: Read and return the uptime of a process
 long LinuxParser::UpTime(int pid) {
-     int location=1;                                         
-     string uptimeS;
-     long uptime=0;
-     std::ifstream upstream(kProcDirectory + to_string(pid) + kStatFilename);
+   int location=1;                                         
+   string uptimeS;
+   long uptime=0;
+   std::ifstream upstream(kProcDirectory + to_string(pid) + kStatFilename);
      if (upstream.is_open()){
          std::istream_iterator<string>begin(upstream);
          std::istream_iterator<string>eos;
@@ -393,6 +403,7 @@ long LinuxParser::UpTime(int pid) {
                    location++;
                }
           }
+        //  upstream.close();
      }     
          if (uptimeS!=""){
                uptime=std::stol(uptimeS);

@@ -23,7 +23,6 @@ using std::vector;
 //DONE: Return this process's ID
 int Process::Pid() { 
     return this->pid_;
-
  }
   
  Process::Process(int pid_){
@@ -31,8 +30,14 @@ int Process::Pid() {
  }
 //DONE: Return this process's CPU utilization
 float Process::CpuUtilization(){  
-       float utime, stime, cutime, cstime, starttime, total_time,
-       cpu_usage=0, seconds;
+       float utime;
+       float stime;
+       float cutime;
+       float cstime;
+       float starttime;
+       float total_time;
+       float cpu_usage=0;
+       float seconds;
        int x=1;
        std::ifstream upstream(LinuxParser::kProcDirectory + to_string(this->pid_) + 
        LinuxParser::kStatFilename);
@@ -60,14 +65,16 @@ float Process::CpuUtilization(){
                 begin ++; 
                 x++;
               }
-         total_time = utime + stime + cutime + cstime;
-         seconds =LinuxParser::UpTime() - (starttime/sysconf(_SC_CLK_TCK));
-         cpu_usage  = (((total_time / sysconf(_SC_CLK_TCK)) / seconds ));
-         return cpu_usage;
-       }
-   else throw ("/proc/[pid]/stat not accessible");
-   return 0;
+           total_time = utime + stime + cutime + cstime;
+           seconds =LinuxParser::UpTime() - (starttime/sysconf(_SC_CLK_TCK));
+           cpu_usage  = (((total_time / sysconf(_SC_CLK_TCK)) / seconds ));
+           return cpu_usage;
+           upstream.close();
+          }
+   return 0.0;
 }
+
+
 
 //DONE: Return the command that generated this process
 string Process::Command(){
@@ -90,6 +97,6 @@ long int Process::UpTime() {
 
 //DONE: Overload the "less than" comparison operator for Process objects
 bool Process::operator<(Process & a){ 
-       return (a.CpuUtilization() > this->CpuUtilization());
+       return (a.CpuUtilization() < this->CpuUtilization());
 }
 

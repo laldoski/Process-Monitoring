@@ -28,6 +28,17 @@ int RunningProcesses();
 std::string OperatingSystem();
 std::string Kernel();
 
+
+const std::string filterProcesses("processes");
+const std::string filterRunningProcesses("procs_running");
+const std::string filterMemTotalString("MemTotal:");
+const std::string filterMemAvailableString("MemAvailable:");
+const std::string filterMemFreeString("MemFree:");
+const std::string filterCpu("cpu");
+const std::string filterUID("uid:");
+const std::string filterVmSize("VmSize:");
+
+
 // CPU
 enum CPUStates {
   kUser_ = 0,
@@ -41,6 +52,7 @@ enum CPUStates {
   kGuest_,
   kGuestNice_
 };
+
 std::vector<std::string> CpuUtilization();
 long Jiffies();
 long ActiveJiffies();
@@ -54,5 +66,40 @@ std::string Uid(int pid);
 std::string User(int pid);
 long int UpTime(int pid);
 };  // namespace LinuxParser
+
+
+template <typename T>
+T findValueByKey(std::string const &keyFilter, std::string const &filename) {
+  std::string line;
+  std::string key;
+  T value;
+  std::ifstream stream(LinuxParser::kProcDirectory + filename);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) {
+        if (key == keyFilter) {
+        return value;
+        }
+      }
+    }
+  }
+  return value;
+};
+
+template <typename T>
+T getValueOfFile(std::string const &filename) {
+  std::string line;
+  T value;
+
+  std::ifstream stream(LinuxParser::kProcDirectory + filename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    linestream >> value;
+  }
+  return value;
+};
+
 
 #endif

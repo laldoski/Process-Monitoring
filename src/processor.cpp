@@ -12,12 +12,19 @@
 
 //DONE: Return the aggregate CPU utilization
 float Processor::Utilization() {
-      long idleJiff_old, idleJiff_now, activeJiff_old, activeJiff_now;
-      float activeJiff_Delta, idleJiff_Delta, activeTime, idleTime, cpuutil;    
-      idleJiff_old = LinuxParser::IdleJiffies();
-      activeJiff_old = LinuxParser::ActiveJiffies(); 
-      while(true){
-          std::this_thread::sleep_for(std::chrono::seconds(3));
+     long idleJiff_old;
+     long idleJiff_now;
+     long activeJiff_old;
+     long activeJiff_now;
+     float activeJiff_Delta;
+     float idleJiff_Delta;
+     float activeTime;
+     float idleTime;
+     float cpuutil;    
+     idleJiff_old = LinuxParser::IdleJiffies();
+     activeJiff_old = LinuxParser::ActiveJiffies(); 
+     while(true){
+          std::this_thread::sleep_for(std::chrono::milliseconds(200));
           idleJiff_now = LinuxParser::IdleJiffies();
           activeJiff_now = LinuxParser::ActiveJiffies();
           idleJiff_Delta = abs(idleJiff_now - idleJiff_old);
