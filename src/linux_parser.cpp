@@ -75,7 +75,7 @@ vector<int> LinuxParser::Pids() {
  
         if (std::all_of(filename.begin(), filename.end(), isdigit)) {
              int pid = stoi(filename);
-             if  ((LinuxParser::Ram(pid) !="") && (LinuxParser::Command(pid) !="")) 
+              
             // && (Process::CpuUtilization() !=0.0))
             pids.push_back(pid);        
          }
@@ -288,7 +288,7 @@ int LinuxParser::RunningProcesses(){
            { throw (" Running Processes not found");}
           runstream.close();
      }
-      else throw ("proc/meminfo file not accessible");
+     // else throw ("proc/meminfo file not accessible");
       return 0;
 }
 

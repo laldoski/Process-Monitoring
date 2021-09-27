@@ -19,13 +19,16 @@ Processor& System::Cpu() {
 
 //DONE: Return a container composed of the system's processes
 vector<Process>& System::Processes(){
-      processes_.clear();
-      vector<int>processID = LinuxParser::Pids();
-      for (int start: processID){ 
-           processes_.push_back(start);
-       }
-      std::sort(processes_.begin(),processes_.end());
-      return processes_;
+   processes_.clear();
+   vector<int>processID = LinuxParser::Pids();
+     for (int start: processID){ 
+           if ((LinuxParser::Ram(start) !="") && (LinuxParser::Command(start) !="")){
+                processes_.push_back(start);
+            }
+            else start++;
+      }
+   std::sort(processes_.begin(),processes_.end());
+   return processes_;
 }
 
 //DONE: Return the system's kernel identifier (string)
